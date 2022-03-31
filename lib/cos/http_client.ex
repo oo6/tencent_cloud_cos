@@ -132,15 +132,25 @@ defmodule COS.HTTPClient do
 
   defp xml_to_map(xml), do: xml |> XmlToMap.naive_map() |> COS.Utils.underscore_keys()
 
-  defp map_to_xml(nil), do: ""
-  defp map_to_xml(string) when is_binary(string), do: string
+  @doc false
+  def map_to_xml(nil), do: ""
 
-  defp map_to_xml({key, map}) when is_map(map) do
-    {camelize_key(key), nil, Enum.map(map, &map_to_xml/1)}
+  def map_to_xml({key, map}) when is_map(map) do
+    {camelize_key(key), nil, map_to_xml(map)}
     |> XmlBuilder.generate(format: :none)
   end
 
-  defp map_to_xml({key, other}), do: {camelize_key(key), nil, other}
+  def map_to_xml({key, list}) when is_list(list) do
+    Enum.map(list, &{camelize_key(key), nil, map_to_xml(&1)})
+  end
+
+  def map_to_xml({key, other}), do: {camelize_key(key), nil, map_to_xml(other)}
+
+  def map_to_xml(map_or_list) when is_map(map_or_list) or is_list(map_or_list) do
+    Enum.map(map_or_list, &map_to_xml/1)
+  end
+
+  def map_to_xml(other), do: other
 
   defp camelize_key(key), do: key |> to_string() |> Macro.camelize()
 end

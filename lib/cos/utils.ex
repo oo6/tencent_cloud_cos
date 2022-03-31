@@ -9,5 +9,9 @@ defmodule COS.Utils do
     Map.new(map, fn {key, value} -> {Macro.underscore(key), underscore_keys(value)} end)
   end
 
+  def underscore_keys(list) when is_list(list) do
+    Enum.map(list, &underscore_keys/1)
+  end
+
   def underscore_keys(other), do: other
 end
