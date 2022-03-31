@@ -42,7 +42,12 @@ defmodule COS.Object.Tagging do
              query: %{tagging: ""},
              opts: opts
            ) do
-      body = %{"tag_set" => get_in(response.body, ["tagging", "tag_set", "tag"]) || []}
+      tag_set =
+        response.body
+        |> get_in(["tagging", "tag_set", "tag"])
+        |> List.wrap()
+
+      body = %{"tag_set" => tag_set}
       {:ok, %{response | body: body}}
     end
   end
