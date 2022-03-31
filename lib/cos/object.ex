@@ -168,4 +168,84 @@ defmodule COS.Object do
       _ -> false
     end
   end
+
+  @doc """
+  删除单个对象 - [腾讯云文档](https://cloud.tencent.com/document/product/436/7743)
+
+  ## 示例
+
+      COS.Object.delete("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example.txt")
+
+      # 删除“文件夹”，如果“文件夹”内有对象，则不会删除。
+      COS.Object.delete("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example/")
+  """
+  @spec delete(host :: binary(), key :: binary(), opts :: Tesla.Env.opts()) :: Tesla.Env.t()
+  def delete(host, key, opts \\ []) do
+    HTTPClient.request(method: :delete, url: host <> "/" <> key, opts: opts)
+  end
+
+  @doc """
+  删除多个对象 - [腾讯云文档](https://cloud.tencent.com/document/product/436/8289)
+
+  ## 示例
+
+      iex> COS.Object.multi_delete("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", %{
+             object: [%{key: "example.txt"}, %{key: "error.txt"}]
+           })
+      {:ok, %Tesla.Env{
+        body: %{
+          "deleted" => [%{
+            "key" => "example.txt",
+            ...
+          }],
+          "error" => [%{
+            "key" => "error.txt",
+            ...
+          }]
+        },
+        ...
+      }}
+
+      # Quiet 模式，在响应中仅包含删除失败的对象信息和错误信息
+      iex> COS.Object.multi_delete("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", %{
+             object: [%{key: "example.txt"}, %{key: "error.txt"}],
+             quiet: true
+           })
+      {:ok, %Tesla.Env{
+        body: %{
+          "deleted" => [],
+          "error" => [%{
+            "key" => "error.txt",
+            ...
+          }]
+        },
+        ...
+      }}
+  """
+  @spec multi_delete(
+          host :: binary(),
+          body :: %{
+            :object => [%{:key => binary(), optional(:version_id) => binary()}],
+            optional(:quiet) => boolean()
+          },
+          opts :: Tesla.Env.opts()
+        ) :: Tesla.Env.t()
+  def multi_delete(host, body, opts \\ []) do
+    body = {:delete, body}
+
+    with {:ok, response} <-
+           HTTPClient.request(method: :post, url: host <> "/?delete", body: body, opts: opts) do
+      body =
+        Enum.reduce(["deleted", "error"], %{}, fn key, acc ->
+          value =
+            response.body
+            |> get_in(["delete_result", key])
+            |> List.wrap()
+
+          Map.put(acc, key, value)
+        end)
+
+      {:ok, %{response | body: body}}
+    end
+  end
 end
