@@ -288,4 +288,44 @@ defmodule COS.Object do
       {:ok, %{response | body: body}}
     end
   end
+
+  @doc """
+  获取请求预签名 URL
+
+  说明：
+    - 建议用户使用临时密钥生成预签名，通过临时授权的方式进一步提高预签名上传、下载等请求的安全性。
+      申请临时密钥时，请遵循[最小权限指引原则](https://cloud.tencent.com/document/product/436/38618)，防止泄漏目标存储桶或对象之外的资源。
+    - 如果您一定要使用永久密钥来生成预签名，建议永久密钥的权限范围仅限于上传或下载操作，以规避风险。
+    - 获取对象的 URL 并下载对象参数，可在获取的 URL 后拼接参数 `response-content-disposition=attachment`。
+
+  ## 示例
+
+      iex> COS.Object.get_presigned_url("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example.txt")
+      "https://bucket-1250000000.cos.ap-beijing.myqcloud.com/example.txt?q-ak=AKIDb************************DmNIJ&q-header-list=&q-key-time=1649011703%3B1649012603&q-sign-algorithm=sha1&q-sign-time=1649011703%3B1649012603&q-signature=a9c13b2b1e09c5ce46df0242ac37b9cb828c0d6b&q-url-param-list="
+  """
+  @spec get_presigned_url(
+          host :: binary(),
+          key :: binary(),
+          opts :: [
+            method: Tesla.Env.method(),
+            query: Tesla.Env.query(),
+            headers: Tesla.Env.headers()
+          ]
+        ) :: binary()
+  def get_presigned_url(host, key, opts \\ []) do
+    method = opts[:method] || :get
+    path = "/" <> key
+    query = opts[:query] || %{}
+    headers = opts[:headers] || []
+
+    query =
+      method
+      |> COS.Auth.get(path, query, headers)
+      |> Map.new()
+      |> Map.merge(query)
+      |> URI.encode_query()
+
+    %{URI.parse(host) | path: path, query: query}
+    |> URI.to_string()
+  end
 end
