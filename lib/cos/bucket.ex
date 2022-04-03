@@ -26,17 +26,28 @@ defmodule COS.Bucket do
       # 创建多 AZ 存储桶
       COS.Bucket.put(
         "https://bucket-1250000000.cos.ap-beijing.myqcloud.com",
-        %{bucket_a_z_config: "MAZ"}
+        body: %{bucket_a_z_config: "MAZ"}
       )
   """
   @spec put(
           host :: binary(),
-          config :: %{bucket_a_z_config: binary()} | nil,
-          opts :: Tesla.Env.opts()
+          opts :: [
+            body: %{bucket_a_z_config: binary()} | nil,
+            headers: keyword(),
+            tesla_opts: Tesla.Env.opts()
+          ]
         ) ::
           Tesla.Env.t()
-  def put(host, config \\ nil, opts \\ []) do
-    body = if config, do: {:create_bucket_configuration, config}
-    HTTPClient.request(method: :put, url: host, body: body, opts: opts)
+  def put(host, opts \\ []) do
+    body = if opts[:body], do: {:create_bucket_configuration, opts[:body]}
+    headers = opts[:headers] || []
+
+    HTTPClient.request(
+      method: :put,
+      url: host,
+      body: body,
+      headers: headers,
+      opts: opts[:tesla_opts]
+    )
   end
 end

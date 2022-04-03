@@ -42,7 +42,7 @@ defmodule COS.HTTPClient do
 
       {:ok, %{status: status} = response} when status in 200..299 ->
         body = xml_to_map(response.body)
-        result_key = get_in(options, [:opts, :result_key])
+        result_key = options[:result_key]
 
         response = %{response | body: if(result_key, do: body[result_key], else: body)}
 

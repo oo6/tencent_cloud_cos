@@ -31,7 +31,7 @@ defmodule COS.Object do
         "https://bucket-1250000000.cos.ap-beijing.myqcloud.com",
         "example.json",
         "{\"key\":\"value\"}",
-        "content-type": "application-json"
+        headers: ["content-type": "application-json"]
       )
 
       # 设置 HTTP 响应的超时时间
@@ -39,8 +39,7 @@ defmodule COS.Object do
         "https://bucket-1250000000.cos.ap-beijing.myqcloud.com",
         "example.txt",
         "content",
-        [],
-        adapter: [recv_timeout: 30_000]
+        tesla_opts: [adapter: [recv_timeout: 30_000]]
       )
 
       # 创建“文件夹”
@@ -50,16 +49,17 @@ defmodule COS.Object do
           host :: binary(),
           key :: binary(),
           content :: binary(),
-          headers :: [{binary(), binary()}],
-          opts :: Tesla.Env.opts()
+          opts :: [headers: keyword(), tesla_opts: Tesla.Env.opts()]
         ) :: Tesla.Env.t()
-  def put(host, key, content, headers \\ [], opts \\ []) do
+  def put(host, key, content, opts \\ []) do
+    headers = opts[:headers] || []
+
     HTTPClient.request(
       method: :put,
       url: host <> "/" <> key,
       body: content,
       headers: headers,
-      opts: opts
+      opts: opts[:tesla_opts]
     )
   end
 
@@ -83,11 +83,10 @@ defmodule COS.Object do
           host :: binary(),
           key :: binary(),
           path :: binary(),
-          headers :: [{binary(), binary()}],
-          opts :: Tesla.Env.opts()
+          opts :: [headers: keyword(), tesla_opts: Tesla.Env.opts()]
         ) :: Tesla.Env.t()
-  def put_from_file(host, key, path, headers \\ [], opts \\ []) do
-    put(host, key, File.read!(path), headers, opts)
+  def put_from_file(host, key, path, opts \\ []) do
+    put(host, key, File.read!(path), opts)
   end
 
   @doc """
@@ -121,15 +120,17 @@ defmodule COS.Object do
           host :: binary(),
           key :: binary(),
           source :: binary(),
-          headers :: [{binary(), binary()}],
-          opts :: Tesla.Env.opts()
+          opts :: [headers: keyword(), tesla_opts: Tesla.Env.opts()]
         ) :: Tesla.Env.t()
-  def copy(host, key, source, headers \\ [], opts \\ []) do
+  def copy(host, key, source, opts \\ []) do
+    headers = opts[:headers] || []
+
     HTTPClient.request(
       method: :put,
       url: host <> "/" <> key,
       headers: [{"x-cos-copy-source", source} | headers],
-      opts: [{:result_key, "copy_object_result"} | opts]
+      opts: opts[:tesla_opts],
+      result_key: "copy_object_result"
     )
   end
 
@@ -139,11 +140,23 @@ defmodule COS.Object do
   @spec head(
           host :: binary(),
           key :: binary(),
-          headers :: [{binary(), binary()}],
-          opts :: Tesla.Env.opts()
+          opts :: [
+            query: %{optional(:version_id) => binary()} | nil,
+            headers: keyword(),
+            tesla_opts: Tesla.Env.opts()
+          ]
         ) :: Tesla.Env.t()
-  def head(host, key, headers \\ [], opts \\ []) do
-    HTTPClient.request(method: :head, url: host <> "/" <> key, headers: headers, opts: opts)
+  def head(host, key, opts \\ []) do
+    version_id = get_in(opts, [:query, :version_id])
+    headers = opts[:headers] || []
+
+    HTTPClient.request(
+      method: :head,
+      url: host <> "/" <> key,
+      query: %{versionId: version_id},
+      headers: headers,
+      opts: opts[:tesla_opts]
+    )
   end
 
   @doc """
@@ -160,9 +173,17 @@ defmodule COS.Object do
       iex> COS.Object.exists?("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "missing.txt")
       false
   """
-  @spec exists?(host :: binary(), key :: binary()) :: boolean()
-  def exists?(host, key) do
-    with {:ok, _response} <- head(host, key) do
+  @spec exists?(
+          host :: binary(),
+          key :: binary(),
+          opts :: [
+            query: %{optional(:version_id) => binary()} | nil,
+            headers: keyword(),
+            tesla_opts: Tesla.Env.opts()
+          ]
+        ) :: boolean()
+  def exists?(host, key, opts \\ []) do
+    with {:ok, _response} <- head(host, key, opts) do
       true
     else
       _ -> false
@@ -179,9 +200,23 @@ defmodule COS.Object do
       # 删除“文件夹”，如果“文件夹”内有对象，则不会删除。
       COS.Object.delete("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example/")
   """
-  @spec delete(host :: binary(), key :: binary(), opts :: Tesla.Env.opts()) :: Tesla.Env.t()
+  @spec delete(
+          host :: binary(),
+          key :: binary(),
+          opts :: [
+            query: %{optional(:version_id) => binary()} | nil,
+            tesla_opts: Tesla.Env.opts()
+          ]
+        ) :: Tesla.Env.t()
   def delete(host, key, opts \\ []) do
-    HTTPClient.request(method: :delete, url: host <> "/" <> key, opts: opts)
+    version_id = get_in(opts, [:query, :version_id])
+
+    HTTPClient.request(
+      method: :delete,
+      url: host <> "/" <> key,
+      query: %{versionId: version_id},
+      opts: opts[:tesla_opts]
+    )
   end
 
   @doc """
@@ -228,13 +263,18 @@ defmodule COS.Object do
             :object => [%{:key => binary(), optional(:version_id) => binary()}],
             optional(:quiet) => boolean()
           },
-          opts :: Tesla.Env.opts()
+          opts :: [tesla_opts: Tesla.Env.opts()]
         ) :: Tesla.Env.t()
   def multi_delete(host, body, opts \\ []) do
     body = {:delete, body}
 
     with {:ok, response} <-
-           HTTPClient.request(method: :post, url: host <> "/?delete", body: body, opts: opts) do
+           HTTPClient.request(
+             method: :post,
+             url: host <> "/?delete",
+             body: body,
+             opts: opts[:tesla_opts]
+           ) do
       body =
         Enum.reduce(["deleted", "error"], %{}, fn key, acc ->
           value =
