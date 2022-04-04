@@ -1,11 +1,31 @@
 defmodule COS.Auth do
-  def get(method, path, query, headers) do
+  @moduledoc false
+
+  @type expired_at :: DateTime.t()
+  @type expire_in :: pos_integer() | {pos_integer(), :second | :minute | :hour | :day}
+
+  @doc """
+  请求签名 - [腾讯云文档](https://cloud.tencent.com/document/product/436/7778)
+  """
+  @spec get(
+          method :: Tesla.Env.method(),
+          path :: binary(),
+          opts :: [
+            query: Tesla.Env.query(),
+            headers: Tesla.Env.headers(),
+            expired_at: expired_at(),
+            expire_in: expire_in()
+          ]
+        ) :: keyword()
+  def get(method, path, opts \\ []) do
+    query = opts[:query] || %{}
+    headers = opts[:headers] || []
     config = COS.config()
 
-    # https://cloud.tencent.com/document/product/436/7778
     # 1. 生成 KeyTime
     start_timestamp = DateTime.utc_now() |> DateTime.to_unix()
-    key_time = "#{start_timestamp};#{start_timestamp + 900}"
+    end_timestamp = end_timestamp(start_timestamp, opts)
+    key_time = "#{start_timestamp};#{end_timestamp}"
 
     # 2. 生成 SignKey
     sign_key =
@@ -63,10 +83,25 @@ defmodule COS.Auth do
     ]
   end
 
+  @doc false
+  def end_timestamp(start_timestamp, opts \\ []) do
+    case {opts[:expired_at], opts[:expire_in]} do
+      {nil, nil} -> start_timestamp + 900
+      {%DateTime{} = expired_at, _} -> DateTime.to_unix(expired_at)
+      {_, expire_in} -> start_timestamp + duration(expire_in)
+    end
+  end
+
   defp url_encode(value) do
     value
     |> to_string()
     |> URI.encode_www_form()
     |> String.replace("+", "%20")
   end
+
+  defp duration(seconds) when is_integer(seconds), do: seconds
+  defp duration({seconds, :second}), do: duration(seconds)
+  defp duration({minutes, :minute}), do: duration(minutes * 60)
+  defp duration({hours, :hour}), do: duration(hours * 60 * 60)
+  defp duration({days, :day}), do: duration(days * 24 * 60 * 60)
 end

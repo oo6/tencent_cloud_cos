@@ -1,5 +1,5 @@
 defmodule COS.HTTPClient do
-  # @moduledoc false
+  @moduledoc false
 
   @doc """
   See `Tesla.request/1`
@@ -28,7 +28,7 @@ defmodule COS.HTTPClient do
 
     authorization =
       method
-      |> COS.Auth.get(path, options[:query] || %{}, headers)
+      |> COS.Auth.get(path, query: options[:query], headers: headers)
       |> Enum.map(fn {key, value} -> "#{key}=#{value}" end)
       |> Enum.join("&")
 

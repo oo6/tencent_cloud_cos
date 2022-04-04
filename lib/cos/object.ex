@@ -309,18 +309,24 @@ defmodule COS.Object do
           opts :: [
             method: Tesla.Env.method(),
             query: Tesla.Env.query(),
-            headers: Tesla.Env.headers()
+            headers: Tesla.Env.headers(),
+            expired_at: COS.Auth.expired_at(),
+            expire_in: COS.Auth.expire_in()
           ]
         ) :: binary()
   def get_presigned_url(host, key, opts \\ []) do
     method = opts[:method] || :get
     path = "/" <> key
     query = opts[:query] || %{}
-    headers = opts[:headers] || []
 
     query =
       method
-      |> COS.Auth.get(path, query, headers)
+      |> COS.Auth.get(path,
+        query: query,
+        headers: opts[:headers],
+        expire_in: opts[:expire_in],
+        expired_at: opts[:expired_at]
+      )
       |> Map.new()
       |> Map.merge(query)
       |> URI.encode_query()
