@@ -1,13 +1,11 @@
 defmodule COS.Bucket.VersioningTest do
-  use ExUnit.Case, async: true
-
-  import Tesla.Mock
+  use COS.DataCase, async: true
 
   alias COS.Bucket.Versioning
 
   test "unified response body while never enabled or suspended on the bucket" do
     mock(fn _ ->
-      text("""
+      xml("""
       <?xml version='1.0' encoding='utf-8' ?>
       <VersioningConfiguration/>
       """)

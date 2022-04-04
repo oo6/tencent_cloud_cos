@@ -1,14 +1,12 @@
 defmodule COS.ObjectTest do
-  use ExUnit.Case, async: true
-
-  import Tesla.Mock
+  use COS.DataCase, async: true
 
   alias COS.Object
 
   describe "multi_delete" do
     test "unified response body while no error" do
       mock(fn _ ->
-        text("""
+        xml("""
         <?xml version='1.0' encoding='utf-8' ?>
         <DeleteResult>
           <Deleted>
@@ -40,7 +38,7 @@ defmodule COS.ObjectTest do
 
     test "unified response body while quiet or no deleted" do
       mock(fn _ ->
-        text("""
+        xml("""
         <?xml version='1.0' encoding='utf-8' ?>
         <DeleteResult>
           <Error>

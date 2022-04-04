@@ -1,14 +1,12 @@
 defmodule COS.Object.TaggingTest do
-  use ExUnit.Case, async: true
-
-  import Tesla.Mock
+  use COS.DataCase, async: true
 
   alias COS.Object.Tagging
 
   describe "get" do
     test "return empty list when object no tag" do
       mock(fn _ ->
-        text("""
+        xml("""
         <?xml version='1.0' encoding='utf-8' ?>
         <Tagging>
           <TagSet/>
@@ -22,7 +20,7 @@ defmodule COS.Object.TaggingTest do
 
     test "return list of tag when object has only one tag" do
       mock(fn _ ->
-        text("""
+        xml("""
         <?xml version='1.0' encoding='utf-8' ?>
         <Tagging>
           <TagSet>

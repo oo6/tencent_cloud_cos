@@ -1,14 +1,12 @@
 defmodule COS.ServiceTest do
-  use ExUnit.Case, async: true
-
-  import Tesla.Mock
+  use COS.DataCase, async: true
 
   alias COS.Service
 
   describe "get" do
     test "return empty list when no buckets" do
       mock(fn _ ->
-        text("""
+        xml("""
         <ListAllMyBucketsResult>
           <Buckets/>
           <Owner>
@@ -24,7 +22,7 @@ defmodule COS.ServiceTest do
 
     test "return list when has only one bucket" do
       mock(fn _ ->
-        text("""
+        xml("""
         <ListAllMyBucketsResult>
           <Buckets>
             <Bucket>

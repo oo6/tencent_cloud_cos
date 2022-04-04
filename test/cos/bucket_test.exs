@@ -1,7 +1,5 @@
 defmodule COS.BucketTest do
-  use ExUnit.Case, async: true
-
-  import Tesla.Mock
+  use COS.DataCase, async: true
 
   alias COS.Bucket
 
@@ -24,7 +22,7 @@ defmodule COS.BucketTest do
 
   test "handling list objects return value formats" do
     mock(fn _ ->
-      text("""
+      xml("""
       <?xml version='1.0' encoding='utf-8' ?>
       <ListBucketResult>
         <Contents>
@@ -50,31 +48,31 @@ defmodule COS.BucketTest do
           <StorageClass>STANDARD</StorageClass>
         </Contents>
         <Name>bucket-1250000000</Name>
-        <IsTruncated>fasle</IsTruncated>
+        <IsTruncated>false</IsTruncated>
         <MaxKeys>1000</MaxKeys>
         <Prefix/>
         <Marker/>
         <NextMarker/>
       </ListBucketResult>
       """)
-
-      assert {:ok,
-              %{
-                body: %{
-                  "contents" => [
-                    %{"key" => "foo/", "size" => 0},
-                    %{"key" => "foo/bar.txt", "size" => 1024}
-                  ],
-                  "is_truncated" => false,
-                  "max_keys" => 1000
-                }
-              }} = Bucket.list_objects("https://bucket-1250000000.cos.ap-beijing.myqcloud.com")
     end)
+
+    assert {:ok,
+            %{
+              body: %{
+                "contents" => [
+                  %{"key" => "foo/", "size" => 0},
+                  %{"key" => "foo/bar.txt", "size" => 1024}
+                ],
+                "is_truncated" => false,
+                "max_keys" => 1000
+              }
+            }} = Bucket.list_objects("https://bucket-1250000000.cos.ap-beijing.myqcloud.com")
   end
 
   test "handling list objects with versions return value formats" do
     mock(fn _ ->
-      text("""
+      xml("""
       <ListVersionsResult>
         <Version>
           <Key>foo</Key>
@@ -106,7 +104,7 @@ defmodule COS.BucketTest do
           <Key>bar</Key>
           <VersionId>MTg0NDUwOTQ5ODUyODM1NDE1NDc</VersionId>
           <IsLatest>true</IsLatest>
-          <LastModified>2022-04-04T16:07:06.000Z</LastModified>x
+          <LastModified>2022-04-04T16:07:06.000Z</LastModified>
           <ETag>&quot;c4ca4238a0b923820dcc509a6f75849b&quot;</ETag>
           <Size>1</Size>
           <StorageClass>STANDARD</StorageClass>
@@ -123,37 +121,37 @@ defmodule COS.BucketTest do
         <VersionIdMarker/>
       </ListVersionsResult>
       """)
-
-      assert {:ok,
-              %{
-                body: %{
-                  "version" => [
-                    %{
-                      "key" => "foo",
-                      "is_latest" => true,
-                      "size" => 2,
-                      "version_id" => "MTg0NDUwOTQ5ODUyOTk0MjEwNzY"
-                    },
-                    %{
-                      "key" => "foo",
-                      "is_latest" => false,
-                      "size" => 1,
-                      "version_id" => nil
-                    },
-                    %{
-                      "key" => "br",
-                      "is_latest" => true,
-                      "size" => 1,
-                      "version_id" => "MTg0NDUwOTQ5ODUyODM1NDE1NDc"
-                    }
-                  ],
-                  "is_truncated" => false,
-                  "max_keys" => 1000
-                }
-              }} =
-               Bucket.list_objects_with_versions(
-                 "https://bucket-1250000000.cos.ap-beijing.myqcloud.com"
-               )
     end)
+
+    assert {:ok,
+            %{
+              body: %{
+                "version" => [
+                  %{
+                    "key" => "foo",
+                    "is_latest" => true,
+                    "size" => 2,
+                    "version_id" => "MTg0NDUwOTQ5ODUyOTk0MjEwNzY"
+                  },
+                  %{
+                    "key" => "foo",
+                    "is_latest" => false,
+                    "size" => 1,
+                    "version_id" => nil
+                  },
+                  %{
+                    "key" => "bar",
+                    "is_latest" => true,
+                    "size" => 1,
+                    "version_id" => "MTg0NDUwOTQ5ODUyODM1NDE1NDc"
+                  }
+                ],
+                "is_truncated" => false,
+                "max_keys" => 1000
+              }
+            }} =
+             Bucket.list_objects_with_versions(
+               "https://bucket-1250000000.cos.ap-beijing.myqcloud.com"
+             )
   end
 end
