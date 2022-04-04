@@ -334,4 +334,94 @@ defmodule COS.Object do
     %{URI.parse(host) | path: path, query: query}
     |> URI.to_string()
   end
+
+  @doc """
+  下载对象 - [腾讯云文档](https://cloud.tencent.com/document/product/436/7753)
+
+  ## 示例
+
+      iex> COS.Object.put("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example.txt", "content")
+      {:ok, ...}
+
+      iex> COS.Object.get("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example.txt", "content")
+      {:ok, %Tesla.Env{
+        body: "content",
+        headers: [
+          {"content-type", "application/octet-stream"},
+          {"content-length", "7"},
+          ...
+        ],
+        ...
+      }}
+
+      # 指定 Range 请求头部下载部分内容
+      iex> COS.Object.get("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example.txt", "content", headers: [
+             {"range", "bytes=0-2"}
+           ])
+      {:ok, %Tesla.Env{
+        body: "con",
+        headers: [
+          {"content-type", "application/octet-stream"},
+          {"content-length", "3"},
+          {"accept-ranges", "bytes"},
+          {"content-range", "bytes 0-0/3"},
+          ...
+        ],
+        ...
+      }}
+  """
+  @spec get(
+          host :: binary(),
+          key :: binary(),
+          opts :: [
+            query: %{optional(:version_id) => binary()} | nil,
+            headers: Tesla.Env.headers(),
+            tesla_opts: Tesla.Env.opts()
+          ]
+        ) :: Tesla.Env.t()
+  def get(host, key, opts \\ []) do
+    version_id = get_in(opts, [:query, :version_id])
+    headers = opts[:headers] || []
+
+    HTTPClient.request(
+      method: :get,
+      url: host <> "/" <> key,
+      query: %{versionId: version_id},
+      headers: headers,
+      opts: opts[:tesla_opts]
+    )
+  end
+
+  @doc """
+  下载对象到本地文件
+
+  ## 示例
+
+      iex> COS.Object.get_to_file("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example.txt", "./example.txt")
+      {:ok, %Tesla.Env{
+        body: "content",
+        headers: [
+          {"content-type", "application/octet-stream"},
+          {"content-length", "7"},
+          ...
+        ],
+        ...
+      }}
+  """
+  @spec get_to_file(
+          host :: binary(),
+          key :: binary(),
+          path :: binary(),
+          opts :: [
+            query: %{optional(:version_id) => binary()} | nil,
+            headers: Tesla.Env.headers(),
+            tesla_opts: Tesla.Env.opts()
+          ]
+        ) :: Tesla.Env.t()
+  def get_to_file(host, key, path, opts \\ []) do
+    with {:ok, response} <- get(host, key, opts),
+         :ok <- File.write(path, response.body) do
+      {:ok, response}
+    end
+  end
 end

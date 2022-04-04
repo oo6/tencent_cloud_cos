@@ -43,14 +43,17 @@ defmodule COS.HTTPClient do
     |> Tesla.client(config.http_client[:adapter])
     |> Tesla.request(options)
     |> case do
-      {:ok, %{status: status, body: ""} = response} when status in 200..299 ->
-        {:ok, response}
-
-      {:ok, %{status: status} = response} when status in 200..299 ->
-        body = xml_to_map(response.body)
-        result_key = options[:result_key]
-
-        response = %{response | body: if(result_key, do: body[result_key], else: body)}
+      {:ok, %{status: status, headers: headers} = response} when status in 200..299 ->
+        response =
+          if Enum.find(headers, fn {key, value} ->
+               key == "content-type" && value == "application/xml"
+             end) do
+            body = xml_to_map(response.body)
+            result_key = options[:result_key]
+            %{response | body: if(result_key, do: body[result_key], else: body)}
+          else
+            response
+          end
 
         {:ok, response}
 
