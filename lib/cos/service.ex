@@ -6,8 +6,8 @@ defmodule COS.Service do
 
   查询请求者名下的所有存储桶列表或特定地域下的存储桶列表。
   """
-  @spec get(host :: binary(), opts :: [tesla_opts: Tesla.Env.opts()]) :: Tesla.Env.t()
-  def get(host, opts \\ []) do
+  @spec list_buckets(host :: binary(), opts :: [tesla_opts: Tesla.Env.opts()]) :: Tesla.Env.t()
+  def list_buckets(host, opts \\ []) do
     with {:ok, response} <- HTTPClient.request(method: :get, url: host, opts: opts[:tesla_opts]) do
       buckets =
         response.body

@@ -17,7 +17,8 @@ defmodule COS.ServiceTest do
         """)
       end)
 
-      assert {:ok, %{body: %{"buckets" => []}}} = Service.get("https://service.cos.myqcloud.com")
+      assert {:ok, %{body: %{"buckets" => []}}} =
+               Service.list_buckets("https://service.cos.myqcloud.com")
     end
 
     test "return list when has only one bucket" do
@@ -40,7 +41,7 @@ defmodule COS.ServiceTest do
       end)
 
       assert {:ok, %{body: %{"buckets" => [%{"name" => "foo"}]}}} =
-               Service.get("https://service.cos.myqcloud.com")
+               Service.list_buckets("https://service.cos.myqcloud.com")
     end
   end
 end
