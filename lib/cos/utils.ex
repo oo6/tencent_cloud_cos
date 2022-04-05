@@ -1,5 +1,5 @@
 defmodule COS.Utils do
-  @moduledoc false
+  @type expire_in :: pos_integer() | {pos_integer(), :second | :minute | :hour | :day}
 
   @doc """
   将驼峰 key 转换为下划线风格
@@ -14,4 +14,14 @@ defmodule COS.Utils do
   end
 
   def underscore_keys(other), do: other
+
+  @doc """
+  根据 {amount, unit} 格式计算出多少秒
+  """
+  @spec to_seconds(expire_in :: expire_in()) :: pos_integer()
+  def to_seconds(seconds) when is_integer(seconds), do: seconds
+  def to_seconds({seconds, :second}), do: to_seconds(seconds)
+  def to_seconds({minutes, :minute}), do: to_seconds(minutes * 60)
+  def to_seconds({hours, :hour}), do: to_seconds(hours * 60 * 60)
+  def to_seconds({days, :day}), do: to_seconds(days * 24 * 60 * 60)
 end

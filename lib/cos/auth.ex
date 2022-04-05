@@ -1,8 +1,7 @@
 defmodule COS.Auth do
   @moduledoc false
 
-  @type expired_at :: DateTime.t()
-  @type expire_in :: pos_integer() | {pos_integer(), :second | :minute | :hour | :day}
+  alias COS.Utils
 
   @doc """
   请求签名 - [腾讯云文档](https://cloud.tencent.com/document/product/436/7778)
@@ -13,8 +12,8 @@ defmodule COS.Auth do
           opts :: [
             query: Tesla.Env.query(),
             headers: Tesla.Env.headers(),
-            expired_at: expired_at(),
-            expire_in: expire_in()
+            expired_at: DateTime.t(),
+            expire_in: Utils.expire_in()
           ]
         ) :: keyword()
   def get(method, path, opts \\ []) do
@@ -88,7 +87,7 @@ defmodule COS.Auth do
     case {opts[:expired_at], opts[:expire_in]} do
       {nil, nil} -> start_timestamp + 900
       {%DateTime{} = expired_at, _} -> DateTime.to_unix(expired_at)
-      {_, expire_in} -> start_timestamp + duration(expire_in)
+      {_, expire_in} -> start_timestamp + Utils.to_seconds(expire_in)
     end
   end
 
@@ -98,10 +97,4 @@ defmodule COS.Auth do
     |> URI.encode_www_form()
     |> String.replace("+", "%20")
   end
-
-  defp duration(seconds) when is_integer(seconds), do: seconds
-  defp duration({seconds, :second}), do: duration(seconds)
-  defp duration({minutes, :minute}), do: duration(minutes * 60)
-  defp duration({hours, :hour}), do: duration(hours * 60 * 60)
-  defp duration({days, :day}), do: duration(days * 24 * 60 * 60)
 end

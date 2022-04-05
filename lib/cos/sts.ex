@@ -3,6 +3,8 @@ defmodule COS.STS do
   临时密钥生成及使用指引 - [腾讯云文档](https://cloud.tencent.com/document/product/436/14048)
   """
 
+  alias COS.Utils
+
   @doc """
   获取联合身份临时访问凭证 - [腾讯云文档](https://cloud.tencent.com/document/api/1312/48195)
 
@@ -15,7 +17,7 @@ defmodule COS.STS do
                statement: [
                  %{
                    effect: "allow",
-                   action: ["cos:PostObject"],
+                   action: ["cos:PutObject"],
                    resource: ["qcs::cos:ap-beijing:uid/1250000000:bucket-1250000000/*"]
                  }
                ]
@@ -39,7 +41,7 @@ defmodule COS.STS do
                statement: [
                  %{
                    effect: "allow",
-                   action: ["cos:PostObject"],
+                   action: ["cos:PutObject"],
                    resource: ["invalid resouce"]
                  }
                ]
@@ -61,7 +63,11 @@ defmodule COS.STS do
           name :: binary(),
           policy :: map(),
           region :: binary(),
-          opts :: Tesla.Env.opts()
+          opts :: [
+            expired_at: DateTime.t(),
+            expire_in: Utils.expire_in(),
+            tesla_opts: Tesla.Env.opts()
+          ]
         ) :: Tesla.Env.t()
   def get_credential(name, policy, region, opts \\ []) do
     host = "sts.#{region}.tencentcloudapi.com"
@@ -72,10 +78,18 @@ defmodule COS.STS do
       {"x-tc-timestamp", DateTime.utc_now() |> DateTime.to_unix()}
     ]
 
+    duration_seconds =
+      case {opts[:expired_at], opts[:expire_in]} do
+        {nil, nil} -> 1800
+        {%DateTime{} = expired_at, _} -> DateTime.to_unix(expired_at)
+        {_, expire_in} -> Utils.to_seconds(expire_in)
+      end
+
     body =
       %{
         Name: name,
-        Policy: policy |> Jason.encode!() |> URI.encode_www_form()
+        Policy: policy |> Jason.encode!() |> URI.encode_www_form(),
+        DurationSeconds: duration_seconds
       }
       |> Jason.encode!()
 
@@ -85,13 +99,19 @@ defmodule COS.STS do
     headers =
       headers ++
         [
-          {"x-tc-Action", "GetFederationToken"},
+          {"x-tc-action", "GetFederationToken"},
           {"x-tc-region", region},
           {"x-tc-version", "2018-08-13"},
           {"authorization", authorization}
         ]
 
-    options = [method: :post, url: "https://" <> host, body: body, headers: headers, opts: opts]
+    options = [
+      method: :post,
+      url: "https://" <> host,
+      body: body,
+      headers: headers,
+      opts: opts[:tesla_opts]
+    ]
 
     config.http_client[:middleware]
     |> Tesla.client(config.http_client[:adapter])
