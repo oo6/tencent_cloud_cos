@@ -104,7 +104,7 @@ defmodule COS.Bucket do
           |> Map.filter(&elem(&1, 1))
       end
 
-    with {:ok, response} =
+    with {:ok, response} <-
            HTTPClient.request(
              method: :get,
              url: host <> "/",

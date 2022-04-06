@@ -70,6 +70,27 @@ defmodule COS.BucketTest do
             }} = Bucket.list_objects("https://bucket-1250000000.cos.ap-beijing.myqcloud.com")
   end
 
+  test "list objects return error when no such bucket" do
+    mock(fn _ ->
+      xml(
+        """
+        <?xml version='1.0' encoding='utf-8' ?>
+        <Error>
+          <Code>NoSuchBucket</Code>
+          <Message>The specified bucket does not exist.</Message>
+          <Resource>invalid-bucket.cos.ap-beijing.myqcloud.com</Resource>
+          <RequestId>NjI0ZDM4ZDlfNWRiM2IxMDlfMjlmM2NfMWFjYmVkYQ==</RequestId>
+          <TraceId>OGVmYzZiMmQzYjA2OWNhODk0NTRkMTBiOWVmMDAxODc1NGE1MWY0MzY2NTg1MzM1OTY3MDliYzY2YTQ0ZThhMGJkZTk0YzA5YWMzNTJkMGZjNDgzNjQ5NTcyMmI4Mzdk</TraceId>
+        </Error>
+        """,
+        status: 404
+      )
+    end)
+
+    assert {:error, %{body: %{"code" => "NoSuchBucket"}}} =
+             Bucket.list_objects("https://invalid-bucket.cos.ap-beijing.myqcloud.com")
+  end
+
   test "handling list objects with versions return value formats" do
     mock(fn _ ->
       xml("""
