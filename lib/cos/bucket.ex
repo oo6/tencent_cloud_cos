@@ -16,8 +16,8 @@ defmodule COS.Bucket do
       {:ok, %Tesla.Env{
         body: "",
         headers: [
-          "server", "tencent-cos",
-          "data", "Tue, 29 Mar 2022 16:39:58 GMT",
+          {"server", "tencent-cos"},
+          {"data", "Tue, 29 Mar 2022 16:39:58 GMT"},
           ...
         ],
         ...
@@ -33,7 +33,7 @@ defmodule COS.Bucket do
           host :: binary(),
           opts :: [
             body: %{bucket_a_z_config: binary()} | nil,
-            headers: keyword(),
+            headers: Tesla.Env.headers(),
             tesla_opts: Tesla.Env.opts()
           ]
         ) :: Tesla.Env.t()

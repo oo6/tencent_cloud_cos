@@ -19,8 +19,8 @@ defmodule COS.Object do
       {:ok, %Tesla.Env{
         body: "",
         headers: [
-          "server", "tencent-cos",
-          "data", "Tue, 29 Mar 2022 16:39:58 GMT",
+          {"server", "tencent-cos"},
+          {"data", "Tue, 29 Mar 2022 16:39:58 GMT"},
           ...
         ],
         ...
@@ -31,7 +31,7 @@ defmodule COS.Object do
         "https://bucket-1250000000.cos.ap-beijing.myqcloud.com",
         "example.json",
         "{\"key\":\"value\"}",
-        headers: ["content-type": "application-json"]
+        headers: [{"content-type", "application-json"}]
       )
 
       # 设置 HTTP 响应的超时时间
@@ -49,7 +49,7 @@ defmodule COS.Object do
           host :: binary(),
           key :: binary(),
           content :: binary(),
-          opts :: [headers: keyword(), tesla_opts: Tesla.Env.opts()]
+          opts :: [headers: Tesla.Env.headers(), tesla_opts: Tesla.Env.opts()]
         ) :: Tesla.Env.t()
   def put(host, key, content, opts \\ []) do
     headers = opts[:headers] || []
@@ -72,8 +72,8 @@ defmodule COS.Object do
       {:ok, %Tesla.Env{
         body: "",
         headers: [
-          "server", "tencent-cos",
-          "data", "Tue, 29 Mar 2022 16:39:58 GMT",
+          {"server", "tencent-cos"},
+          {"data", "Tue, 29 Mar 2022 16:39:58 GMT"},
           ...
         ],
         ...
@@ -83,7 +83,7 @@ defmodule COS.Object do
           host :: binary(),
           key :: binary(),
           path :: binary(),
-          opts :: [headers: keyword(), tesla_opts: Tesla.Env.opts()]
+          opts :: [headers: Tesla.Env.headers(), tesla_opts: Tesla.Env.opts()]
         ) :: Tesla.Env.t()
   def put_from_file(host, key, path, opts \\ []) do
     put(host, key, File.read!(path), opts)
@@ -156,8 +156,8 @@ defmodule COS.Object do
           "last_modified" => "2022-03-29T17:20:24Z"
         },
         headers: [
-          "server", "tencent-cos",
-          "data", "Tue, 29 Mar 2022 16:39:58 GMT",
+          {"server", "tencent-cos"},
+          {"data", "Tue, 29 Mar 2022 16:39:58 GMT"},
           ...
         ],
         ...
@@ -167,7 +167,7 @@ defmodule COS.Object do
           host :: binary(),
           key :: binary(),
           source :: binary(),
-          opts :: [headers: keyword(), tesla_opts: Tesla.Env.opts()]
+          opts :: [headers: Tesla.Env.headers(), tesla_opts: Tesla.Env.opts()]
         ) :: Tesla.Env.t()
   def copy(host, key, source, opts \\ []) do
     headers = opts[:headers] || []
@@ -189,7 +189,7 @@ defmodule COS.Object do
           key :: binary(),
           opts :: [
             query: %{optional(:version_id) => binary()} | nil,
-            headers: keyword(),
+            headers: Tesla.Env.headers(),
             tesla_opts: Tesla.Env.opts()
           ]
         ) :: Tesla.Env.t()
@@ -225,7 +225,7 @@ defmodule COS.Object do
           key :: binary(),
           opts :: [
             query: %{optional(:version_id) => binary()} | nil,
-            headers: keyword(),
+            headers: Tesla.Env.headers(),
             tesla_opts: Tesla.Env.opts()
           ]
         ) :: boolean()
