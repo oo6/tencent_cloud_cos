@@ -1,20 +1,20 @@
 defmodule COS.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/oo6/tencent_cloud_cos"
+  @version "0.1.0"
+
   def project do
     [
       app: :tencent_cloud_cos,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: "腾讯云对象存储 COS(Cloud Object Storage) Elixir SDK",
-      docs: [
-        main: "readme",
-        source_url: "https://github.com/oo6/tencent_cloud_cos",
-        extras: ["README.md"]
-      ]
+      docs: docs(),
+      package: package()
     ]
   end
 
@@ -35,6 +35,26 @@ defmodule COS.MixProject do
       {:xml_builder, "~> 2.1"},
       {:jason, "~> 1.3"},
       {:ex_doc, "~> 0.28", only: :dev, runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      extras: ["README.md", "LICENSE", "CHANGELOG.md"]
+    ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      maintainers: ["Milo Lee"],
+      links: %{
+        "GitHub" => @source_url,
+        "Changelog" => "https://hexdocs.pm/tencent_cloud_cos/changelog.html"
+      }
     ]
   end
 end
