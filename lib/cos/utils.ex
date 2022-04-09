@@ -24,4 +24,11 @@ defmodule COS.Utils do
   def to_seconds({minutes, :minute}), do: to_seconds(minutes * 60)
   def to_seconds({hours, :hour}), do: to_seconds(hours * 60 * 60)
   def to_seconds({days, :day}), do: to_seconds(days * 24 * 60 * 60)
+
+  # TODO: remove when we require OTP 22.1
+  if Code.ensure_loaded?(:crypto) and function_exported?(:crypto, :mac, 4) do
+    def hmac(sub_type, key, data), do: :crypto.mac(:hmac, sub_type, key, data)
+  else
+    def hmac(sub_type, key, data), do: :crypto.hmac(sub_type, key, data)
+  end
 end

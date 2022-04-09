@@ -204,5 +204,5 @@ defmodule COS.STS do
       )
   end
 
-  defp hmac_sha256(key, data), do: :crypto.mac(:hmac, :sha256, key, data)
+  defp hmac_sha256(key, data), do: Utils.hmac(:sha256, key, data)
 end

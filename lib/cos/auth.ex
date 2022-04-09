@@ -28,8 +28,8 @@ defmodule COS.Auth do
 
     # 2. 生成 SignKey
     sign_key =
-      :hmac
-      |> :crypto.mac(:sha, config.secret_key, key_time)
+      :sha
+      |> Utils.hmac(config.secret_key, key_time)
       |> Base.encode16(case: :lower)
 
     # 3. 生成 UrlParamList 和 HttpParameters
@@ -67,8 +67,8 @@ defmodule COS.Auth do
 
     # 7. 生成 Signature
     signature =
-      :hmac
-      |> :crypto.mac(:sha, sign_key, string_to_sign)
+      :sha
+      |> Utils.hmac(sign_key, string_to_sign)
       |> Base.encode16(case: :lower)
 
     [
