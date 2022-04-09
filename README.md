@@ -1,11 +1,13 @@
 # COS
 
+[![Build Status](https://github.com/oo6/tencent_cloud_cos/workflows/CI/badge.svg)](https://github.com/oo6/tencent_cloud_cos/actions?query=workflow%3ACI)
+[![Hex.pm Version](https://img.shields.io/hexpm/v/tencent_cloud_cos.svg)](https://hex.pm/packages/tencent_cloud_cos)
+
 腾讯云对象存储 COS(Cloud Object Storage) Elixir SDK ([XML API](https://cloud.tencent.com/document/product/436/7751))
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `tencent_cloud_cos` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `tencent_cloud_cos` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -14,10 +16,6 @@ def deps do
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/tencent_cloud_cos>.
 
 ## Usage
 
