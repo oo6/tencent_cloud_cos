@@ -90,6 +90,53 @@ defmodule COS.Object do
   end
 
   @doc """
+  追加上传对象 - [腾讯云文档](https://cloud.tencent.com/document/product/436/7741)
+
+  ## 示例
+
+      iex> COS.Object.append("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example.txt", 0, "hello")
+      {:ok, %Tesla.Env{
+        body: "",
+        headers: [
+          {"x-cos-content-sha1", "5d41402abc4b2a76b9719d911017c592"},
+          {"x-cos-next-append-position", "5"},
+          ...
+        ],
+        ...
+      }}
+
+      iex> COS.Object.append("https://bucket-1250000000.cos.ap-beijing.myqcloud.com", "example.txt", 5, " world")
+      {:ok, %Tesla.Env{
+        body: "",
+        headers: [
+          {"x-cos-content-sha1", "b7913aa15c43be7d534b4eec6e99e8a0"},
+          {"x-cos-next-append-position", "11"},
+          ...
+        ],
+        ...
+      }}
+  """
+  @spec append(
+          host :: binary(),
+          key :: binary(),
+          position :: pos_integer(),
+          content :: binary(),
+          opts :: [headers: Tesla.Env.headers(), tesla_opts: Tesla.Env.opts()]
+        ) :: Tesla.Env.t()
+  def append(host, key, position, content, opts \\ []) do
+    headers = opts[:headers] || []
+
+    HTTPClient.request(
+      method: :post,
+      url: host <> "/" <> key,
+      query: %{append: "", position: position},
+      headers: headers,
+      body: content,
+      opts: opts[:tesla_opts]
+    )
+  end
+
+  @doc """
   复制对象 - [腾讯云文档](https://cloud.tencent.com/document/product/436/10881)
 
   创建一个已存在 COS 的对象的副本，即将一个对象从源路径（对象键）复制到目标路径（对象键）。
@@ -423,5 +470,29 @@ defmodule COS.Object do
          :ok <- File.write(path, response.body) do
       {:ok, response}
     end
+  end
+
+  @doc """
+  恢复归档对象 - [腾讯云文档](https://cloud.tencent.com/document/product/436/12633)
+  """
+  @spec restore(
+          host :: binary(),
+          key :: binary(),
+          body :: %{days: pos_integer(), c_a_s_job_parameters: %{tier: binary()}},
+          opts :: [headers: Tesla.Env.headers(), tesla_opts: Tesla.Env.opts()]
+        ) :: Tesla.Env.t()
+  def restore(host, key, body, opts \\ []) do
+    body = {:restore_request, body}
+    version_id = get_in(opts, [:query, :version_id])
+    headers = opts[:headers] || []
+
+    HTTPClient.request(
+      method: :post,
+      url: host <> "/" <> key,
+      query: %{restore: "", versionId: version_id},
+      headers: headers,
+      body: body,
+      opts: opts[:tesla_opts]
+    )
   end
 end
