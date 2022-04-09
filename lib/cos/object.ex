@@ -357,8 +357,8 @@ defmodule COS.Object do
             method: Tesla.Env.method(),
             query: Tesla.Env.query(),
             headers: Tesla.Env.headers(),
-            expired_at: COS.Auth.expired_at(),
-            expire_in: COS.Auth.expire_in()
+            expired_at: DateTime.t(),
+            expire_in: COS.Utils.expire_in()
           ]
         ) :: binary()
   def get_presigned_url(host, key, opts \\ []) do
