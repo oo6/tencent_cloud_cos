@@ -21,7 +21,7 @@ defmodule COS.BucketTest do
   end
 
   test "handling list objects return value formats" do
-    mock(fn _ ->
+    mock(fn %{query: %{"max-keys": 1000}} ->
       xml("""
       <?xml version='1.0' encoding='utf-8' ?>
       <ListBucketResult>
@@ -67,7 +67,10 @@ defmodule COS.BucketTest do
                 "is_truncated" => false,
                 "max_keys" => 1000
               }
-            }} = Bucket.list_objects("https://bucket-1250000000.cos.ap-beijing.myqcloud.com")
+            }} =
+             Bucket.list_objects("https://bucket-1250000000.cos.ap-beijing.myqcloud.com",
+               query: %{max_keys: 1000}
+             )
   end
 
   test "list objects return error when no such bucket" do
@@ -92,7 +95,7 @@ defmodule COS.BucketTest do
   end
 
   test "handling list objects with versions return value formats" do
-    mock(fn _ ->
+    mock(fn %{query: %{"max-keys": 1000}} ->
       xml("""
       <ListVersionsResult>
         <Version>
@@ -172,7 +175,8 @@ defmodule COS.BucketTest do
               }
             }} =
              Bucket.list_objects_with_versions(
-               "https://bucket-1250000000.cos.ap-beijing.myqcloud.com"
+               "https://bucket-1250000000.cos.ap-beijing.myqcloud.com",
+               query: %{max_keys: 1000}
              )
   end
 end

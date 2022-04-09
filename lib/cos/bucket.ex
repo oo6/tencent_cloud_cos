@@ -101,7 +101,8 @@ defmodule COS.Bucket do
             "encoding-type": other_query[:encoding_type],
             "max-keys": other_query[:max_keys]
           })
-          |> Map.filter(&elem(&1, 1))
+          |> Enum.filter(&elem(&1, 1))
+          |> Map.new()
       end
 
     with {:ok, response} <-
@@ -144,27 +145,30 @@ defmodule COS.Bucket do
           ]
         ) :: Tesla.Env.t()
   def list_objects_with_versions(host, opts \\ []) do
-    case opts[:query] do
-      nil ->
-        %{}
+    query =
+      case opts[:query] do
+        nil ->
+          %{}
 
-      query ->
-        {other_query, query} = Map.split(query, [:prefix, :delimiter])
+        query ->
+          {query, other_query} = Map.split(query, [:prefix, :delimiter])
 
-        query
-        |> Map.merge(%{
-          "encoding-type": other_query[:encoding_type],
-          "max-keys": other_query[:max_keys],
-          "key-marker": other_query[:key_maker],
-          "version-id-marker": other_query[:version_id_marker]
-        })
-        |> Map.filter(&elem(&1, 1))
-    end
+          query
+          |> Map.merge(%{
+            "encoding-type": other_query[:encoding_type],
+            "max-keys": other_query[:max_keys],
+            "key-marker": other_query[:key_maker],
+            "version-id-marker": other_query[:version_id_marker]
+          })
+          |> Enum.filter(&elem(&1, 1))
+          |> Map.new()
+      end
 
     with {:ok, response} <-
            HTTPClient.request(
              method: :get,
              url: host <> "/?versions",
+             query: query,
              result_key: "list_versions_result",
              opts: opts[:tesla_opts]
            ) do
