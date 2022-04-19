@@ -25,6 +25,14 @@ defmodule COS.Utils do
   def to_seconds({hours, :hour}), do: to_seconds(hours * 60 * 60)
   def to_seconds({days, :day}), do: to_seconds(days * 24 * 60 * 60)
 
+  @doc """
+  对特殊符号进行编码 - [腾讯云文档](https://cloud.tencent.com/document/product/436/7778#.E5.87.86.E5.A4.87.E5.B7.A5.E4.BD.9C)
+  """
+  @spec url_encode(value :: binary() | integer()) :: binary()
+  def url_encode(value) do
+    value |> to_string() |> URI.encode_www_form() |> String.replace("+", "%20")
+  end
+
   # TODO: remove when we require OTP 22.1
   if Code.ensure_loaded?(:crypto) and function_exported?(:crypto, :mac, 4) do
     def hmac(sub_type, key, data), do: :crypto.mac(:hmac, sub_type, key, data)

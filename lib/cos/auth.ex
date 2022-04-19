@@ -35,7 +35,9 @@ defmodule COS.Auth do
     # 3. 生成 UrlParamList 和 HttpParameters
     sorted_query =
       query
-      |> Enum.map(fn {key, value} -> {url_encode(key) |> String.downcase(), url_encode(value)} end)
+      |> Enum.map(fn {key, value} ->
+        {Utils.url_encode(key) |> String.downcase(), Utils.url_encode(value)}
+      end)
       |> Enum.sort_by(&elem(&1, 0))
 
     url_param_list = sorted_query |> Enum.map(&elem(&1, 0)) |> Enum.join(";")
@@ -48,7 +50,9 @@ defmodule COS.Auth do
     # 4. 生成 HeaderList 和 HttpHeaders
     sorted_headers =
       headers
-      |> Enum.map(fn {key, value} -> {url_encode(key) |> String.downcase(), url_encode(value)} end)
+      |> Enum.map(fn {key, value} ->
+        {Utils.url_encode(key) |> String.downcase(), Utils.url_encode(value)}
+      end)
       |> Enum.sort_by(&elem(&1, 0))
 
     header_list = sorted_headers |> Enum.map(&elem(&1, 0)) |> Enum.join(";")
@@ -89,12 +93,5 @@ defmodule COS.Auth do
       {%DateTime{} = expired_at, _} -> DateTime.to_unix(expired_at)
       {_, expire_in} -> start_timestamp + Utils.to_seconds(expire_in)
     end
-  end
-
-  defp url_encode(value) do
-    value
-    |> to_string()
-    |> URI.encode_www_form()
-    |> String.replace("+", "%20")
   end
 end

@@ -5,7 +5,7 @@ defmodule COS.Object do
   [腾讯云文档](https://cloud.tencent.com/document/product/436/13324)
   """
 
-  alias COS.HTTPClient
+  alias COS.{HTTPClient, Utils}
 
   @doc ~S"""
   简单上传对象 - [腾讯云文档](https://cloud.tencent.com/document/product/436/7749)
@@ -363,12 +363,11 @@ defmodule COS.Object do
         ) :: binary()
   def get_presigned_url(host, key, opts \\ []) do
     method = opts[:method] || :get
-    path = "/" <> key
     query = opts[:query] || %{}
 
     query =
       method
-      |> COS.Auth.get(path,
+      |> COS.Auth.get("/" <> key,
         query: query,
         headers: opts[:headers],
         expire_in: opts[:expire_in],
@@ -378,7 +377,9 @@ defmodule COS.Object do
       |> Map.merge(query)
       |> URI.encode_query()
 
-    %{URI.parse(host) | path: path, query: query}
+    encoded_key = key |> Utils.url_encode() |> String.replace("%2F", "/")
+
+    %{URI.parse(host) | path: "/" <> encoded_key, query: query}
     |> URI.to_string()
   end
 

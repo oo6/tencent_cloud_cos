@@ -63,4 +63,20 @@ defmodule COS.ObjectTest do
                })
     end
   end
+
+  describe "get_presigned_url" do
+    test "encode key" do
+      assert Object.get_presigned_url(
+               "https://bucket-1250000000.cos.ap-beijing.myqcloud.com",
+               "你好.txt"
+             ) =~ "%E4%BD%A0%E5%A5%BD.txt"
+    end
+
+    test "encode nested key keep /" do
+      assert Object.get_presigned_url(
+               "https://bucket-1250000000.cos.ap-beijing.myqcloud.com",
+               "你好/世界.txt"
+             ) =~ "%E4%BD%A0%E5%A5%BD/%E4%B8%96%E7%95%8C.txt"
+    end
+  end
 end
